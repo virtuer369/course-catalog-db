@@ -1,23 +1,36 @@
 # Transaction Experiment
 
-## Failed transaction
+## 1. Failed transaction
 
-A student was inserted successfully, but the enrollment insert
-failed because the referenced course did not exist.
+A student was inserted successfully, but the enrollment insert failed because the referenced course `no-such-course` did not exist.
 
-After ROLLBACK, the student count was 0.
+PostgreSQL reported a foreign key violation (`enrollments_course_id_fkey`). The transaction entered an aborted state.
 
-This confirmed that all operations inside the transaction
-were cancelled, including the successful first INSERT.
+After executing `ROLLBACK`, the student count for `madina@example.com` was 0.
 
-## Successful transaction
+This confirmed that all operations inside the transaction were cancelled, including the successful first INSERT.
 
-A new student, Madina Ospanova, was inserted together with
-an enrollment in the Web Security Essentials course.
+## 2. Successful transaction
 
-Both INSERT operations succeeded, and COMMIT saved the changes.
+A new student, Madina Ospanova, was inserted together with an enrollment in the `Web Security Essentials` course.
+
+Both INSERT operations succeeded, and `COMMIT` saved the changes.
+
+## 3. Transaction visibility across two connections
+
+Two Query Tool windows were used to test transaction visibility.
+
+| Stage | Window A | Window B: COUNT(*) |
+|---|---|---:|
+| Before COMMIT | Student and enrollment inserted, transaction open | 0 |
+| After COMMIT | Transaction committed | 1 |
+
+The second connection could not see uncommitted changes. After COMMIT, the new student became visible.
+
+This demonstrates PostgreSQL's default READ COMMITTED isolation level.
 
 ## Conclusion
 
-Transactions ensure atomicity: either all related operations
-are committed, or none of them are applied.
+Transactions ensure atomicity: either all related operations are committed, or none of them are applied.
+
+They also prevent other connections from seeing uncommitted changes.
